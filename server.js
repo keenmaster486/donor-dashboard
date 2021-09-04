@@ -1,21 +1,23 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
-const dotenv = require('dotenv');
 const cors = require('cors');
 const session = require('express-session');
 const db = require('./db/db');
+const mongoStore = require('connect-mongo');
+const path = require('path');
 
+const app = express();
 
 // Retrieve environment variables
-dotenv.config();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 app.use(cors(
 {
-	origin: process.env.REACT_ADDRESS,
-	optionsSuccessStatus: 200,
-	credentials: true
+	origin: '*',
+	optionsSuccessStatus: 200
 }));
 
 app.use(bodyParser.urlencoded({limit: '10mb', extended: false}));
@@ -25,9 +27,9 @@ app.use(methodOverride('_method'));
 
 app.use(express.static('./public'));
 
-const sessionStore = new mongoStore(
+const sessionStore = mongoStore.create(
 {
-	mongooseConnection: dbConnection,
+	mongoUrl: process.env.MONGODB_URI,
 	secret: process.env.STORE_SECRET
 });
 
@@ -43,8 +45,8 @@ app.use(session(
 }));
 
 app.get('/status', (req, res) => {
-	res.json(
-	{
+	console.log('GET /status');
+	res.json({
 		status: 'online'
 	});
 });
