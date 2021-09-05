@@ -34,6 +34,7 @@ router.post('/uploadBatch', (req, res) => {
 
 		emailer.sendMail({
 			from: process.env.EMAIL_ADDR,
+			replyTo: process.env.EMAIL_REPLY_ADDR,
 			to: req.session.email,
 			subject: 'Donor Dashboard: New CSV Uploaded',
 			html: `
