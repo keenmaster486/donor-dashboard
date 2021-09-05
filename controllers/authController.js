@@ -6,11 +6,8 @@ const User = require('../models/userSchema');
 
 
 router.post('/login', (req, res) => {
-	//Change username to lowercase:
-	req.body.username = req.body.username.toLowerCase();
-	console.log(`POST /login: trying to login for ${req.body.username}`);
-	//Find the user and take note of the password hash:
-	User.findOne({username: req.body.username}, (err, foundUser) => {
+	console.log(`POST /login for email ${req.body.email}`);
+	User.findOne({email: req.body.email}, (err, foundUser) => {
 		if (err) {
 			console.log(err);
 			res.json({
@@ -20,7 +17,8 @@ router.post('/login', (req, res) => {
 		else if (!foundUser) {
 			req.session.loginAttempt = false;
 			res.json({
-				success: false
+				success: false,
+				message: 'No user found by that email'
 			});
 		}
 		else {
@@ -28,14 +26,11 @@ router.post('/login', (req, res) => {
 			console.log(`Comparing bcrypt password hash.....`);
 			if (bcrypt.compareSync(req.body.password, foundUser.password)) {
 				//Passwords match
-				req.session.username = req.body.username;
 				req.session.logged = true;
-				req.session.usertype = foundUser.usertype;
-				console.log(`${req.body.username} login attempt: passwords match`);
-				req.session.messages.userwelcome = `Welcome, ${req.session.username}!`;
-				req.session.curuserid = foundUser._id;
+				req.session.userId = foundUser._id;
+				req.session.email = foundUser.email;
 				req.session.loginAttempt = true;
-				console.log("login attempt successful");
+				console.log('login attempt successful');
 				//We'll go ahead and send the current user id to the client side:
 				res.json({
 					success: true,
@@ -46,8 +41,10 @@ router.post('/login', (req, res) => {
 			else {
 				//Passwords do not match
 				req.session.loginAttempt = false;
+				console.log('login attempt unsuccessful');
 				res.json({
-					success: false
+					success: false,
+					message: 'Incorrect password'
 				});
 			}
 		}
@@ -56,25 +53,20 @@ router.post('/login', (req, res) => {
 
 
 router.post('/logout', (req, res) => {
-	if (!req.session.username) {
-		res.json(
-		{
+	if (!req.session.userId) {
+		res.json({
 			success: false,
-			message: "Already logged out"
+			message: 'Already logged out'
 		});
 	}
 	else {
 		//End the session:
-		console.log("POST -- Attempting to log out for user " + req.session.username)
-		const tempusername = req.session.username;
+		console.log('POST /logout');
 		req.session.logged = false;
-		req.session.usertype = null;
-		req.session.username = null;
-		req.session.curuserid = null;
+		req.session.userId = null;
 		req.session.destroy();
-		console.log(`${tempusername} is now logged out`);
-		res.json(
-		{
+		console.log('Logout successful');
+		res.json({
 			success: true
 		});
 	}

@@ -21,7 +21,15 @@ class App extends Component
 			defaultHeaders: {
 				'Content-Type': 'application/json',
 				'Cache-Control': 'max-age=0'
-			}
+			},
+			debug: false,
+			loggedIn: false,
+			email: '',
+			password: '',
+			createEmail: '',
+			createPass: '',
+			createPass2: '',
+			sessionId: ''
 		}
 	}
 
@@ -53,22 +61,121 @@ class App extends Component
 		this.setState(input);
 	}
 
+	onDebug = (e) => {
+		this.setState({
+			'debug': !!e.target.checked
+		});
+	}
 
-	render()
-	{
+	onLogout = async () => {
+		const response = await fetch(this.state.apiUrl + '/auth/logout', {
+			'method': 'POST',
+			'headers': this.state.defaultHeaders
+		});
+		const resJson = await response.json();
+
+		if (resJson.success) {
+			this.setState({
+				loggedIn: false
+			});
+		} else {
+			if (resJson.message) {
+				alert(resJson.message);
+			}
+		}
+	}
+
+	onLogin = async () => {
+		const response = await fetch(this.state.apiURL + '/auth/login', {
+			'method': 'POST',
+			'body':  JSON.stringify({
+				'email': this.state.email,
+				'password': this.state.password
+			}),
+			'headers': this.state.defaultHeaders
+		});
+		const resJson = await response.json();
+
+		if (resJson.success) {
+			this.setState({
+				loggedIn: true,
+				sessionId: resJson.sessionId,
+				defaultHeaders: {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'max-age=0',
+					'authentication': resJson.sessionId
+				}
+			});
+			console.log(resJson);
+		} else {
+			if (resJson.message) {
+				alert(resJson.message);
+			}
+		}
+	}
+
+	onCreateAccount = async () => {
+		const response = await fetch(this.state.apiURL + '/user', {
+			'method': 'POST',
+			'body': JSON.stringify({
+				'email': this.state.createEmail,
+				'password': this.state.createPass,
+				'password2': this.state.createPass2
+			}),
+			'headers': this.state.defaultHeaders
+		});
+
+		const resJson = await response.json();
+
+		if (resJson.success) {
+			// log in automatically:
+			this.setState({
+				email: this.state.createEmail,
+				password: this.state.createPass
+			});
+			this.onLogin();
+		} else {
+			if (resJson.message) {
+				alert(resJson.message);
+			}
+		}
+	}
+
+
+	render() {
 		return (
 			<div className="App">
-				<NavBar changeState={this.changeState} appState={this.state}></NavBar>
-				
-				{this.state.menuOption === 'Donations' ?
-				<Donations changeState={this.changeState} appState={this.state}></Donations>:null}
+				{this.state.loggedIn ?
+					<div>
+						<NavBar changeState={this.changeState} appState={this.state}></NavBar>
+						
+						{this.state.menuOption === 'Donations' ?
+						<Donations changeState={this.changeState} appState={this.state}></Donations>:null}
 
-				{this.state.menuOption === 'About' ?
-				<About changeState={this.changeState} appState={this.state}></About>:null}
+						{this.state.menuOption === 'About' ?
+						<About changeState={this.changeState} appState={this.state}></About>:null}
 
-				<div align='center' className='footer'>
-					Api Status: {this.state.apiStatus}
-				</div>
+						<div align='center' className='footer'>
+							Welcome {this.state.email} 
+							Api {this.state.apiStatus} 
+							<input type="checkbox" onChange={this.onDebug}></input> Debug mode
+							<button onClick={this.onLogout}>Log Out</button>
+						</div>
+					</div>
+					:
+					<div>
+						Log In<br></br>
+						<input type="text" name="email" placeholder="Email" onChange={this.handleChange}></input><br></br>
+						<input type="password" name="password" placeholder="Password" onChange={this.handleChange}></input><br></br>
+						<button onClick={this.onLogin}>Log In</button><br></br>
+						<br></br>
+						Create Account<br></br>
+						<input type="text" name="createEmail" placeholder="Email" onChange={this.handleChange}></input><br></br>
+						<input type="password" name="createPass" placeholder="Password" onChange={this.handleChange}></input><br></br>
+						<input type="password" name="createPass2" placeholder="Retype Password" onChange={this.handleChange}></input><br></br>
+						<button onClick={this.onCreateAccount}>Create Account</button><br></br>
+					</div>
+				}
 			</div>
 		);
 	}

@@ -8,7 +8,7 @@ const donationSchema = new Schema(
 	email: {type: String},
 	gender: {type: String},
 	address: {type: String},
-	amount: {type: Number}
+	amount: {type: Number, required: true}
 });
 
 const Donation = new mongoose.model('Donation', donationSchema);
