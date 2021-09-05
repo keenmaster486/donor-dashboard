@@ -15,7 +15,7 @@ class App extends Component
 		super();
 		this.state =
 		{
-			apiURL: 'http://localhost:3001',
+			apiURL: '',
 			apiStatus: '',
 			menuOption: 'Donations',
 			defaultHeaders: {
